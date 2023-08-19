@@ -3,6 +3,7 @@ import json
 from django.http import JsonResponse
 from django.templatetags.static import static
 
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -63,8 +64,17 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    response = json.loads(request.body.decode())
-    products_from_response = response['products']
+    response = request.data
+    try:
+        products_from_response = response['products']
+    except KeyError:
+        return Response({'error': 'products can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
+    if products_from_response is None:
+        return Response({'error': 'products can not be null'}, status=status.HTTP_400_BAD_REQUEST)
+    elif not isinstance(products_from_response, list):
+        return Response({'error': 'products should be presented as a list'}, status=status.HTTP_400_BAD_REQUEST)
+    elif len(products_from_response) == 0:
+        return Response({'error': 'products list can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
     firstname, lastname = response['firstname'], response['lastname']
     phonenumber, address = response['phonenumber'], response['address']
     products = []
