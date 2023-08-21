@@ -120,11 +120,6 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-# class ProductSet(models.Model):
-#     quantity = models.PositiveIntegerField('Количество', default=1, blank=True)
-#     product = models.ForeignKey(Product, on_delete=models.PROTECT, blank=True, null=True)
-
-
 class Order(models.Model):
     first_name = models.CharField(max_length=200, verbose_name='Имя')
     last_name = models.CharField(max_length=200, verbose_name='Фамилия')
@@ -142,3 +137,9 @@ class Order(models.Model):
 
     def __str__(self):
         return f'{self.last_name} {self.first_name} - {self.address}'
+
+
+class ProductSet(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField('Количество', default=1, blank=True)
+    order = models.ForeignKey(Order, on_delete=models.PROTECT)

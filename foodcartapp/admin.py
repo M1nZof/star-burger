@@ -3,7 +3,7 @@ from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 
-from .models import Product, Order
+from .models import Product, Order, ProductSet
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
@@ -107,8 +107,15 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 class ProductInline(admin.TabularInline):
-    model = Order.products.through
+    model = ProductSet
     extra = 0
+
+    readonly_fields = ['show_image']
+
+    def show_image(self, obj):
+        return format_html('<img src="{}" height="200">', obj.product.image.url)
+
+    show_image.short_description = 'Превью картинки'
 
 
 @admin.register(Order)
