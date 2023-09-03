@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Product, Order
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -65,56 +66,15 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    response = request.data
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
-    try:
-        products_from_response = response['products']
-    except KeyError:
-        return Response({'error': 'products can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
-    if products_from_response is None:
-        return Response({'error': 'products can not be null'}, status=status.HTTP_400_BAD_REQUEST)
-    elif not isinstance(products_from_response, list):
-        return Response({'error': 'products should be presented as a list'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-    elif len(products_from_response) == 0:
-        return Response({'error': 'products list can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        firstname, lastname = response['firstname'], response['lastname']
-    except KeyError as e:
-        return Response({'error': f'{e} is a required field'}, status=status.HTTP_400_BAD_REQUEST)
-    if firstname is None:
-        return Response({'error': 'firstname can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
-    elif lastname is None:
-        return Response({'error': 'lastname can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
-    elif not isinstance(firstname, str):
-        return Response({'error': 'firstname should be str'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-    elif not isinstance(lastname, str):
-        return Response({'error': 'lastname should be str'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    try:
-        phonenumber, address = response['phonenumber'], response['address']
-        validate_international_phonenumber(phonenumber)
-    except KeyError as e:
-        return Response({'error': f'{e} is a required field'}, status=status.HTTP_400_BAD_REQUEST)
-    except ValidationError:
-        return Response({'error': 'phonenumber is not correct, please make sure that you wrote correct number'},
-                        status=status.HTTP_406_NOT_ACCEPTABLE)
-    if phonenumber is None or len(phonenumber) < 1:
-        return Response({'error': 'phonenumber can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
-    elif address is None:
-        return Response({'error': 'address can not be empty'}, status=status.HTTP_400_BAD_REQUEST)
-
-    products = []
-    for product in products_from_response:
-        try:
-            products.append(Product.objects.get(pk=product['product']))
-        except ObjectDoesNotExist:
-            return Response({'error': 'product id does not exist'}, status=status.HTTP_400_BAD_REQUEST)
     order = Order.objects.create(
-        first_name=firstname,
-        last_name=lastname,
-        phone_number=phonenumber,
-        address=address,
+        first_name=serializer.validated_data['firstname'],
+        last_name=serializer.validated_data['lastname'],
+        phone_number=serializer.validated_data['phonenumber'],
+        address=serializer.validated_data['address'],
     )
-    order.products.set(products)
-    return Response(response)
+    order.products.set(serializer.validated_data['products'])
+
+    return Response({'placed_order': request.data})
