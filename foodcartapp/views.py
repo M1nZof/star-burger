@@ -69,12 +69,16 @@ def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
+    products = serializer.validated_data['products']
+    product_ids = [product_id['product'].id for product_id in products]
+
     order = Order.objects.create(
         first_name=serializer.validated_data['firstname'],
         last_name=serializer.validated_data['lastname'],
         phone_number=serializer.validated_data['phonenumber'],
         address=serializer.validated_data['address'],
     )
-    order.products.set(serializer.validated_data['products'])
+
+    order.products.set(product_ids)
 
     return Response({'placed_order': request.data})
