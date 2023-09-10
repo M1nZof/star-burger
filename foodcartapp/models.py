@@ -121,9 +121,9 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
-    first_name = models.CharField(max_length=200, verbose_name='Имя')
-    last_name = models.CharField(max_length=200, verbose_name='Фамилия')
-    phone_number = PhoneNumberField(region='RU', verbose_name='Телефон')
+    firstname = models.CharField(max_length=200, verbose_name='Имя')
+    lastname = models.CharField(max_length=200, verbose_name='Фамилия')
+    phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
     address = models.CharField(max_length=200, verbose_name='Адрес доставки')
     products = models.ManyToManyField(
         Product,
@@ -136,7 +136,7 @@ class Order(models.Model):
         verbose_name_plural = 'заказы'
 
     def __str__(self):
-        return f'{self.last_name} {self.first_name} - {self.address}'
+        return f'{self.lastname} {self.firstname} - {self.address}'
 
 
 class ProductSet(models.Model):

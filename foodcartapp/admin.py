@@ -120,6 +120,6 @@ class ProductInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'phone_number', 'address']
+    list_display = ['firstname', 'lastname', 'phonenumber', 'address']
     inlines = [ProductInline, ]
     exclude = ('products', )
