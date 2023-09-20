@@ -142,4 +142,4 @@ class Order(models.Model):
 class ProductSet(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField('Количество', default=1, blank=True)
-    order = models.ForeignKey(Order, on_delete=models.PROTECT)
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='sets')
