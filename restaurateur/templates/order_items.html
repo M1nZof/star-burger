@@ -20,10 +20,10 @@
       <th>Адрес доставки</th>
     </tr>
 
-    {% for order, price in orders %}
+    {% for order in orders %}
       <tr>
         <td>{{ order.pk }}</td>
-        <td>{{ price }} руб.</td>
+        <td>{{ order.total_price }} руб.</td>
         <td>{{ order.firstname }} {{ order.lastname }}</td>
         <td>{{ order.phonenumber }}</td>
         <td>{{ order.address }}</td>
