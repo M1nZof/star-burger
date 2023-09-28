@@ -123,7 +123,7 @@ class RestaurantMenuItem(models.Model):
 
 class OrderQuerySet(models.QuerySet):
     def total_price(self):
-        price = Sum(F('sets__quantity')*F('sets__product__price'))
+        price = Sum(F('sets__quantity')*F('sets__price'))
         return self.prefetch_related('sets').annotate(total_price=price)
 
 
@@ -152,3 +152,4 @@ class ProductSet(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField('Количество', default=1, blank=True)
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='sets')
+    price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, validators=[MinValueValidator(0)])
