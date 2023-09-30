@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.shortcuts import reverse
+from django.shortcuts import reverse, redirect
 from django.templatetags.static import static
 from django.utils.html import format_html
 
@@ -123,3 +123,10 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ['firstname', 'lastname', 'phonenumber', 'address']
     inlines = [ProductInline, ]
     exclude = ('products', )
+
+    def response_change(self, request, obj):
+        default_response = super().response_post_save_change(request, obj)
+        if 'next' in request.GET:
+            return redirect('/manager/orders/')
+        else:
+            return default_response
