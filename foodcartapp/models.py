@@ -123,15 +123,23 @@ class RestaurantMenuItem(models.Model):
 
 class OrderQuerySet(models.QuerySet):
     def total_price(self):
-        price = Sum(F('sets__quantity')*F('sets__price'))
+        price = Sum(F('sets__quantity') * F('sets__price'))
         return self.prefetch_related('sets').annotate(total_price=price)
 
 
 class Order(models.Model):
+    STATUSES = [
+        ('Unprocessed', 'Необработанный'),
+        ('Assembling', 'Cборка'),
+        ('Delivery', 'Доставка'),
+        ('Completed', 'Выполнен')
+    ]
+
     firstname = models.CharField(max_length=200, verbose_name='Имя')
     lastname = models.CharField(max_length=200, verbose_name='Фамилия')
     phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
     address = models.CharField(max_length=200, verbose_name='Адрес доставки')
+    status = models.CharField(max_length=200, verbose_name='Статус', choices=STATUSES, db_index=True)
     products = models.ManyToManyField(
         Product,
         related_name='products',
