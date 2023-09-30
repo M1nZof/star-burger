@@ -140,6 +140,7 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
     address = models.CharField(max_length=200, verbose_name='Адрес доставки')
     status = models.CharField(max_length=200, verbose_name='Статус', choices=STATUSES, db_index=True)
+    comment = models.CharField(max_length=200, verbose_name='Комментарий')
     products = models.ManyToManyField(
         Product,
         related_name='products',
