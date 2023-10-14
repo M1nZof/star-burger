@@ -1,6 +1,6 @@
 from phonenumber_field.serializerfields import PhoneNumberField
-from rest_framework.fields import CharField, IntegerField
-from rest_framework.serializers import Serializer, ModelSerializer
+from rest_framework.fields import CharField
+from rest_framework.serializers import ModelSerializer
 
 from foodcartapp.models import Order, ProductSet
 
