@@ -133,7 +133,11 @@ class Order(models.Model):
         ('Unprocessed', 'Необработанный'),
         ('Assembling', 'Cборка'),
         ('Delivery', 'Доставка'),
-        ('Completed', 'Выполнен')
+        ('Completed', 'Выполнен'),
+    ]
+    PAYMENT_METHODS = [
+        ('Card', 'Картой на сайте'),
+        ('Cash', 'Наличными'),
     ]
 
     firstname = models.CharField(max_length=200, verbose_name='Имя')
@@ -141,7 +145,7 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
     address = models.CharField(max_length=200, verbose_name='Адрес доставки')
     status = models.CharField(max_length=200, verbose_name='Статус', choices=STATUSES, db_index=True)
-    comment = models.CharField(max_length=200, verbose_name='Комментарий')
+    comment = models.CharField(max_length=200, blank=True, null=True, verbose_name='Комментарий')
     products = models.ManyToManyField(
         Product,
         related_name='products',
@@ -150,8 +154,16 @@ class Order(models.Model):
     created_at = models.DateTimeField(default=timezone.now, db_index=True, verbose_name='Дата создания')
     called_at = models.DateTimeField(db_index=True, null=True, blank=True, verbose_name='Дата звонка')
     delivered_at = models.DateTimeField(db_index=True, null=True, blank=True, verbose_name='Дата доставки')
+    payment_method = models.CharField(max_length=200, verbose_name='Способ оплаты',
+                                      choices=PAYMENT_METHODS, db_index=True)
 
     objects = OrderQuerySet.as_manager()
+
+    @property
+    def get_payment_method_display(self):
+        for method_from_choice in self.PAYMENT_METHODS:
+            if str(method_from_choice) == self.payment_method or method_from_choice[0] == self.payment_method:
+                return method_from_choice[1]
 
     class Meta:
         verbose_name = 'заказ'
