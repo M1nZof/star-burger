@@ -1,14 +1,14 @@
+from collections import defaultdict
+
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -92,6 +92,21 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter(status='Unprocessed').total_price()
+    orders = Order.objects.exclude(status='Completed').total_price().order_by('-status')
+    restaurant_and_menus = RestaurantMenuItem.objects.prefetch_related('product', 'restaurant')
+    available_products_in_rests = defaultdict(list)
+    for rest_product in restaurant_and_menus:
+        if rest_product.availability:
+            available_products_in_rests[rest_product.restaurant].append(rest_product.product)
+
+    for order in orders:
+        order.available_in = []
+        for restaurant, products in available_products_in_rests.items():
+            product_set = order.sets.filter(order=order).prefetch_related('product')
+            if all(i in products for i in [x.product for x in product_set]):
+                order.available_in.append(restaurant.name)
+        if not order.available_in:
+            order.available_in = ['Ни один ресторан не может выполнить заказ!']
+
     context = orders
     return render(request, template_name='order_items.html', context={'orders': context})

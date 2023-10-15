@@ -21,6 +21,7 @@
       <th>Телефон</th>
       <th>Адрес доставки</th>
       <th>Комментарий</th>
+      <th>Рестораны</th>
       <th>Ссылка на админку</th>
     </tr>
 
@@ -34,6 +35,21 @@
         <td>{{ order.phonenumber }}</td>
         <td>{{ order.address }}</td>
         <th>{{ order.comment }}</th>
+        {% if not order.restaurant %}
+          {% if 'Star Burger' not in order.available_in|join:", " %}
+            <th>{{ order.available_in|join:", " }}</th>
+          {% else %}
+            <th><details>
+              <summary>Могут выполнить заказ:</summary>
+              {{ order.available_in|join:", " }}
+            </details></th>
+          {% endif %}
+        {% else %}
+          <th><details>
+            <summary>Заказ выполнит:</summary>
+            {{ order.restaurant }}
+          </details></th>
+        {% endif %}
         <td><a href="{% url 'admin:foodcartapp_order_change' object_id=order.pk %}?next={{ request.get_full_path|urlencode }}">Редактировать</a></td>
       </tr>
     {% endfor %}
