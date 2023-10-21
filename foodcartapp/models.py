@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Sum, F
@@ -127,6 +129,23 @@ class OrderQuerySet(models.QuerySet):
         price = Sum(F('sets__quantity') * F('sets__price'))
         return self.prefetch_related('sets').annotate(total_price=price)
 
+    def get_available_restaurants(self):
+        restaurant_and_menus = RestaurantMenuItem.objects.prefetch_related('product', 'restaurant')
+        available_products_in_rests = defaultdict(list)
+        for rest_product in restaurant_and_menus:
+            if rest_product.availability:
+                available_products_in_rests[rest_product.restaurant].append(rest_product.product)
+
+        for order in self:
+            order.available_in = []
+            product_set = order.sets.filter(order=order).prefetch_related('product')
+            for restaurant, products in available_products_in_rests.items():
+                if all(i in products for i in [x.product for x in product_set]):
+                    order.available_in.append(restaurant.name)
+            if not order.available_in:
+                order.available_in = ['Ни один ресторан не может выполнить заказ!']
+        return list(self)
+
 
 class Order(models.Model):
     STATUSES = [
@@ -156,8 +175,8 @@ class Order(models.Model):
     delivered_at = models.DateTimeField(db_index=True, null=True, blank=True, verbose_name='Дата доставки')
     payment_method = models.CharField(max_length=200, verbose_name='Способ оплаты',
                                       choices=PAYMENT_METHODS, db_index=True)
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.PROTECT, verbose_name='Ресторан', default=None,
-                                   blank=True, null=True)
+    performer = models.ForeignKey(Restaurant, on_delete=models.PROTECT, verbose_name='Ресторан', default=None,
+                                  blank=True, null=True, related_name='orders')
 
     objects = OrderQuerySet.as_manager()
 
