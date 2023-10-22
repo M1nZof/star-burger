@@ -1,10 +1,16 @@
+import requests
+
 from collections import defaultdict
+from geopy import distance
 
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Sum, F
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+
+from star_burger.custom_errors import YandexApiError
+from star_burger.settings import YANDEX_API_KEY
 
 
 class Restaurant(models.Model):
@@ -135,16 +141,46 @@ class OrderQuerySet(models.QuerySet):
         for rest_product in restaurant_and_menus:
             if rest_product.availability:
                 available_products_in_rests[rest_product.restaurant].append(rest_product.product)
+                available_products_in_rests[rest_product.restaurant].append(rest_product.restaurant.address)
 
         for order in self:
             order.available_in = []
             product_set = order.sets.filter(order=order).prefetch_related('product')
-            for restaurant, products in available_products_in_rests.items():
-                if all(i in products for i in [x.product for x in product_set]):
+            for restaurant, data in available_products_in_rests.items():
+                if all(i in data[0:-1] for i in [x.product for x in product_set]):
+                    try:
+                        rest_lon, rest_lat = self.fetch_coordinates(YANDEX_API_KEY, data[-1])
+                        order_lon, order_lat = self.fetch_coordinates(YANDEX_API_KEY, order.address)
+                    except YandexApiError as e:
+                        print(e)
+                        rest_lon, rest_lat, order_lon, order_lat = None, None, None, None
+                    order.distance_from_rest_to_recipient = distance.distance((rest_lat, rest_lon),
+                                                                              (order_lat, order_lon)).km
                     order.available_in.append(restaurant.name)
             if not order.available_in:
                 order.available_in = ['Ни один ресторан не может выполнить заказ!']
         return list(self)
+
+    @staticmethod
+    def fetch_coordinates(apikey, address):
+        base_url = "https://geocode-maps.yandex.ru/1.x"
+        try:
+            response = requests.get(base_url, params={
+                "geocode": address,
+                "apikey": apikey,
+                "format": "json",
+            })
+            response.raise_for_status()
+            found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+        except Exception:
+            raise YandexApiError('Ошибка определения координат ресторана (со стороны Yandex)')
+
+        if not found_places:
+            return None
+
+        most_relevant = found_places[0]
+        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+        return lon, lat
 
 
 class Order(models.Model):

@@ -1,4 +1,4 @@
-from collections import defaultdict
+import requests
 
 from django import forms
 from django.shortcuts import redirect, render
@@ -92,6 +92,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    unprocessed_orders = Order.objects.exclude(status='Completed').total_price().order_by('-status').get_available_restaurants()
+    unprocessed_orders = Order.objects.exclude(status='Completed').total_price().order_by('-status').\
+        get_available_restaurants()
     context = unprocessed_orders
     return render(request, template_name='order_items.html', context={'unprocessed_orders': context})

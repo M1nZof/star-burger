@@ -41,7 +41,7 @@
           {% else %}
             <th><details>
               <summary>Могут выполнить заказ:</summary>
-              {{ order.available_in|join:", " }}
+              {{ order.available_in|join:", " }} - {{ order.distance_from_rest_to_recipient|floatformat:2 }} км
             </details></th>
           {% endif %}
         {% else %}
