@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from places.utils import save_place
 from .models import Product, Order, ProductSet
 from .serializers import OrderSerializer
 
@@ -70,5 +71,21 @@ def product_list_api(request):
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
+    order = Order.objects.create(
+        firstname=serializer.validated_data['firstname'],
+        lastname=serializer.validated_data['lastname'],
+        phonenumber=serializer.validated_data['phonenumber'],
+        address=serializer.validated_data['address'],
+
+    )
+    save_place(order.address)
+    order_products_fields = serializer.validated_data['products']
+    products = [ProductSet(
+        order=order,
+        product=fields['product'],
+        quantity=fields['quantity'],
+        price=fields['product'].price,
+    ) for fields in order_products_fields]
+
+    ProductSet.objects.bulk_create(products)
     return Response(serializer.data, status=201)
